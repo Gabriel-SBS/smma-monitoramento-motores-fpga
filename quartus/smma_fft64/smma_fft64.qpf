@@ -1,0 +1,6 @@
+QUARTUS_VERSION = "20.1"
+DATE = "2026.08.14.01:00:00"
+
+# Revisions
+
+PROJECT_REVISION = "smma_fft64"

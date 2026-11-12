@@ -1,0 +1,114 @@
+flowchart TD
+  SRC1[Sensores<br/>vibração · corrente · temperatura]
+  SRC2[Arquivo de Entrada<br/>.hex por canal, Q1.15]
+  BUF0[Buffer de Entrada de Dados<br/>5 canais sincronizados<br/>input_buffer.v]
+  IN[Interface de Entrada<br/>ADC simulado · 25,6 kHz]
+  DEC[Decimador CIC 32×<br/>2 estágios, zero multiplicadores<br/>cic_decimator32.v]
+  WLD[Carregador de Janela<br/>64 pontos → porta de carga da FFT<br/>fft_window_loader.v]
+  LMS[Filtro Adaptativo LMS<br/>taxa cheia, em PARALELO<br/>lms_filter.v]
+  FFT[FFT 64 pontos<br/>6 estágios × 32 butterflies<br/>RAM de 64 pontos é interna<br/>fft64_core.v/fft64_top.v]
+  MAG[Magnitude + Extração de Features<br/>fundamental/2ªharm./energia agregada<br/>mag_extractor.v]
+  PEAK[Detector de Picos<br/>peak_detector.v]
+  MDC[MDC — Algoritmo de Euclides<br/>datapath + FSM<br/>mdc_euclides.v]
+  SPEC[Espectrograma<br/>32×32×1<br/>lms_spectrogram_cnn_top.v]
+  CNN[CNN<br/>1 MAC compartilhado, INT8<br/>spectrogram_cnn_area.v]
+  RMS[RMS por Fase<br/>+ RMS/Média Global<br/>rms_current.v]
+  HARM[Componentes Harmônicas<br/>se desequilíbrio inconclusivo<br/>harmonic_analyzer.v]
+  TEMP[Média + Máximo<br/>por Janela<br/>temperature_window.v]
+  INV[Inversão de Matriz 4×4<br/>Gauss-Jordan, RTL próprio<br/>matrix_inv4x4.v]
+  EST[Estimador de Parâmetros<br/>Mecânicos Faltantes<br/>param_estimator.v]
+  CTRL[Unidade de Controle Global<br/>start · busy · done · valid · ready · enable · reset<br/>smma_top.v]
+  CLS[Classificador<br/>Árvore de Decisão<br/>ml_classifier.v]
+  OUT[Interface de Saída<br/>classe + parâmetros + valid<br/>smma_top.v · pinagem física real: smma_top_de0cv.v]
+
+  SRC1 --> BUF0
+  SRC2 --> BUF0
+  BUF0 --> IN
+
+  %% "Buffer de Amostras (RAM 64 pontos)" removido do diagrama (15/08/2026):
+  %% o proprio cabecalho de fft_window_loader.v documenta que esse buffer
+  %% seria uma TERCEIRA memoria de dados da FFT (contra a Sec. 5) -- o
+  %% fft64_core JA E essa memoria (mem_re/mem_im). IN alimenta DEC/LMS direto.
+  IN -- corrente --> RMS
+  IN -- temperatura --> TEMP
+
+  IN -- vibração --> DEC --> WLD --> FFT
+  IN -- vibração --> LMS
+  LMS -- "resíduo e[n], RMS por janela (feat_lms_residual)" --> CLS
+
+  %% FFT alimenta PEAK e MAG em paralelo (15/08/2026): ambos leem
+  %% rd_addr/rd_re/rd_im do mesmo espectro fft64_top.v, cada um varrendo
+  %% sua propria faixa de bins (PEAK: 1..31, MAG: 0..32) -- nao ha
+  %% intermediacao de um pelo outro.
+  FFT -- "rd_re/rd_im" --> PEAK --> MDC
+  FFT -- "rd_re/rd_im" --> MAG
+  %% as 3 portas continuam fiadas (recalibracao k0_mdc, 15/08/2026), mas so
+  %% feat_bearing_energy e de fato usada pela arvore hoje -- feat_fundamental/
+  %% feat_2nd_harmonic viraram discriminadores fracos com k0 real do MDC
+  %% (ver ml_classifier.v), portas mantidas por estabilidade de interface
+  MAG -- "feat_fundamental/feat_2nd_harmonic/feat_bearing_energy (só bearing_energy usada)" --> CLS
+  MDC -- "fund_bin_k0 (indexa bins)" --> MAG
+
+  %% SPEC/CNN sao um pipeline AUTO-CONTIDO (15/08/2026, verificado com xrun):
+  %% lms_spectrogram_cnn_top.v tem seu PROPRIO LMS + FFT-64 + janela de Hann
+  %% internos, direto da vibracao bruta -- NAO reaproveita DEC/WLD/FFT/LMS
+  %% do fluxo principal, nem consome saida de MAG. E uma via de inferencia
+  %% alternativa e independente (CNN sobre espectrograma), nao uma etapa
+  %% encaixada depois de MAG.
+  IN -- "vibração (LMS+FFT+janela de Hann próprios)" --> SPEC --> CNN
+
+  RMS -- "imbalance_out" --> HARM
+  MDC -- "fund_bin_k0" --> HARM
+  %% agora solida (tarefa 11, 15/08/2026): smma_top.v de fato multiplexa a
+  %% FFT compartilhada pro canal de corrente via curr_spec_buffer.v quando
+  %% HARM pede, verificado fim-a-fim (harm_energy nao-zero observado em
+  %% simulacao real).
+  FFT -- "rd_re/rd_im, reutilizado via smma_top.v" --> HARM
+  RMS -- "imbalance_out (vetor b)" --> EST
+  TEMP -- "temp_mean (vetor b)" --> EST
+  MAG -- "feat_fundamental, feat_bearing_energy (vetor b)" --> EST
+  EST -- "carrega M (wr_en/wr_addr/wr_data)" --> INV
+  INV -- "M⁻¹ (16 elementos)" --> EST
+
+  %% CNN -.-> CLS tracejado (nao solido): ml_classifier.v nao tem porta pro
+  %% class_index/class_onehot da CNN -- sao 2 classificadores INDEPENDENTES
+  %% (arvore e CNN), nao um alimentando o outro; o enunciado (SS6.5) pede so
+  %% 1 dos 2, nao uma fusao.
+  CNN -.-> CLS
+  HARM -.-> CLS
+  RMS -. desequilíbrio .-> CLS
+  TEMP -.-> CLS
+  EST -.-> CLS
+
+  CLS --> OUT
+  CNN -.-> OUT
+
+  %% CTRL agora E smma_top.v de verdade (tarefa 11, 15/08/2026) -- as arestas
+  %% abaixo pra dentro dos 14 modulos do pipeline principal viraram SOLIDAS
+  %% (nao mais conceituais): sao instanciados e dirigidos pela FSM real de
+  %% smma_top.v, verificado fim-a-fim com dado real do dataset KAIST.
+  CTRL --> LMS
+  CTRL --> FFT
+  CTRL --> INV
+  CTRL --> MDC
+  CTRL --> RMS
+  CTRL --> CLS
+  CTRL --> EST
+  CTRL --> TEMP
+  CTRL --> HARM
+  CTRL --> PEAK
+  CTRL --> MAG
+  CTRL -- "clk/reset/enable apenas (streaming, sem start/busy/done)" --> DEC
+  CTRL -- "clk/reset/enable apenas (reativo a sample_in_valid)" --> WLD
+  CTRL -- "clk/reset/enable/start (sem busy/done/valid/ready)" --> BUF0
+
+  %% SPEC continua FORA de smma_top.v -- pipeline auto-contido, nao
+  %% instanciado pelo controlador global ainda (ver Entregas, smma_top.v so
+  %% conecta os 14 modulos do pipeline principal + os 2 novos de suporte).
+  CTRL -. "start/busy/done/valid/ready/enable (topo do pipeline SPEC+CNN, nao instanciado por smma_top.v)" .-> SPEC
+
+  classDef implemented fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#14532d
+  classDef pending fill:#f1f3f5,stroke:#adb5bd,stroke-width:1px,stroke-dasharray:5 5,color:#495057
+
+  class DEC,LMS,FFT,MDC,RMS,INV,EST,CLS,TEMP,BUF0,WLD,HARM,PEAK,MAG,SPEC,CNN,CTRL,OUT implemented
+  class SRC1,SRC2,IN pending

@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+*.vvp
+*.vcd
+quartus/**/db/
+quartus/**/incremental_db/
+quartus/**/output_files/
+xcelium.d/

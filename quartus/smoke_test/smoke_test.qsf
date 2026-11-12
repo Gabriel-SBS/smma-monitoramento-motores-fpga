@@ -1,0 +1,57 @@
+# Teste de bring-up da DE0-CV (de0cv_smoke_test.v) -- projeto SEPARADO do
+# SMMA de proposito: serve pra validar placa/cabo/pinagem sem arrastar o
+# sistema inteiro. Pinos conferidos no "DE0-CV User Manual" (Tabelas 3-2 a
+# 3-6), os MESMOS usados pelo projeto principal.
+set_global_assignment -name FAMILY "Cyclone V"
+set_global_assignment -name DEVICE 5CEBA4F23C7
+set_global_assignment -name TOP_LEVEL_ENTITY de0cv_smoke_test
+set_global_assignment -name ORIGINAL_QUARTUS_VERSION 20.1.0
+set_global_assignment -name PROJECT_OUTPUT_DIRECTORY output_files
+set_global_assignment -name SDC_FILE smoke_test.sdc
+
+set_global_assignment -name VERILOG_FILE ../smma_fft64/rtl/hex7seg.v
+set_global_assignment -name VERILOG_FILE ../smma_fft64/rtl/de0cv_smoke_test.v
+
+# Tabela 3-6 -- clock
+set_location_assignment PIN_M9 -to CLOCK_50
+# Tabela 3-2 -- botoes (so KEY[0] e usado; os outros ficam declarados)
+set_location_assignment PIN_U7 -to KEY[0]
+set_location_assignment PIN_W9 -to KEY[1]
+set_location_assignment PIN_M7 -to KEY[2]
+set_location_assignment PIN_M6 -to KEY[3]
+# Tabela 3-3 -- chaves (SW[9] e a que liga a animacao)
+set_location_assignment PIN_U13 -to SW[0]
+set_location_assignment PIN_V13 -to SW[1]
+set_location_assignment PIN_T13 -to SW[2]
+set_location_assignment PIN_T12 -to SW[3]
+set_location_assignment PIN_AA15 -to SW[4]
+set_location_assignment PIN_AB15 -to SW[5]
+set_location_assignment PIN_AA14 -to SW[6]
+set_location_assignment PIN_AA13 -to SW[7]
+set_location_assignment PIN_AB13 -to SW[8]
+set_location_assignment PIN_AB12 -to SW[9]
+# Tabela 3-4 -- LEDs
+set_location_assignment PIN_AA2 -to LEDR[0]
+set_location_assignment PIN_AA1 -to LEDR[1]
+set_location_assignment PIN_W2 -to LEDR[2]
+set_location_assignment PIN_Y3 -to LEDR[3]
+set_location_assignment PIN_N2 -to LEDR[4]
+set_location_assignment PIN_N1 -to LEDR[5]
+set_location_assignment PIN_U2 -to LEDR[6]
+set_location_assignment PIN_U1 -to LEDR[7]
+set_location_assignment PIN_L2 -to LEDR[8]
+set_location_assignment PIN_L1 -to LEDR[9]
+# Tabela 3-5 -- HEX0 (bit0 = segmento a ... bit6 = segmento g)
+set_location_assignment PIN_U21 -to HEX0[0]
+set_location_assignment PIN_V21 -to HEX0[1]
+set_location_assignment PIN_W22 -to HEX0[2]
+set_location_assignment PIN_W21 -to HEX0[3]
+set_location_assignment PIN_Y22 -to HEX0[4]
+set_location_assignment PIN_Y21 -to HEX0[5]
+set_location_assignment PIN_AA22 -to HEX0[6]
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to CLOCK_50
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to KEY[*]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to SW[*]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to LEDR[*]
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to HEX0[*]

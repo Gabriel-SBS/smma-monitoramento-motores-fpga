@@ -1,0 +1,17 @@
+Analysis & Synthesis Status : Successful - Sat Sep 12 14:46:47 2026
+Quartus Prime Version : 25.1std.0 Build 1129 10/21/2025 SC Lite Edition
+Revision Name : smma_fft64
+Top-level Entity Name : smma_top_de0cv
+Family : Cyclone V
+Logic utilization (in ALMs) : N/A
+Total registers : 4981
+Total pins : 54
+Total virtual pins : 0
+Total block memory bits : 656,384
+Total DSP Blocks : 9
+Total HSSI RX PCSs : 0
+Total HSSI PMA RX Deserializers : 0
+Total HSSI TX PCSs : 0
+Total HSSI PMA TX Serializers : 0
+Total PLLs : 0
+Total DLLs : 0

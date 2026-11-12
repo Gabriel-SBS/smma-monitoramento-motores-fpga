@@ -1,0 +1,40 @@
+	Top level design units:
+		tb_calib
+xcelium> source /apps/cds/installs/XCELIUM2503/tools/xcelium/files/xmsimrc
+xcelium> run
+C desalinhamento   652 111 4161 0100
+C desbalanceamento 313 257 4137 0100
+C rolamento        3714 314 20357 1000
+C normal           256 51 2515 0100
+C desbalanceamento 313 327 2871 0100
+C desalinhamento   677 116 4538 0100
+C rolamento        2844 63 11667 1000
+C normal           313 92 2836 0100
+C desbalanceamento 313 319 2264 0001
+C desalinhamento   701 118 4358 0100
+C normal           313 79 2619 0100
+C rolamento        2623 227 17036 1000
+C desbalanceamento 313 317 2351 0100
+C desalinhamento   677 103 3679 0100
+C normal           256 81 2616 0100
+C rolamento        2598 119 16756 1000
+C desbalanceamento 313 292 2011 0001
+C desalinhamento   724 140 3854 0100
+C normal           313 69 2067 0001
+C rolamento        2654 91 12023 1000
+C desbalanceamento 313 265 2073 0001
+C desalinhamento   724 118 4247 0100
+C normal           362 73 2573 0100
+C rolamento        2786 84 15240 1000
+C normal           313 111 1983 0001
+C desbalanceamento 362 265 1986 0001
+C desalinhamento   746 126 3517 0100
+C rolamento        2827 68 11386 1000
+C desalinhamento   746 110 3411 0100
+C rolamento        2935 116 14344 1000
+C desbalanceamento 404 289 2605 0100
+C normal           362 73 2764 0100
+PROBE_DONE
+Simulation complete via $finish(1) at time 20999110 NS + 0
+/tmp/claude-1001/-home-cidigital-Downloads-PBL/b3ff02d1-d920-465a-8717-7ee2e2ad4eb3/scratchpad/tb_calib.v:31         if (n >= 32) begin $display("PROBE_DONE"); $finish; end
+xcelium> exit
