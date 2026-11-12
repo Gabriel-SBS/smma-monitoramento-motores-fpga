@@ -48,7 +48,7 @@ No dataset, o classificador acerta 73,9 % das janelas. O recall de rolamento é 
 
 São 38 testbenches em `quartus/smma_fft64/tb/`. Eles cobrem cada módulo isolado, o sistema completo com dados reais de cada classe e a entrada pela serial. Rodamos a suíte no Cadence Xcelium durante o projeto. Ela também roda no Icarus Verilog 12; o resultado no Icarus está abaixo.
 
-No Icarus Verilog 12, 37 dos 38 testbenches terminam com PASS. O que falta é o `tb_de0cv_4estados`, que simula 400 ms de placa e não acabou dentro do limite de 10 minutos que demos a cada teste. Não chegou a falhar, só é lento demais para o Icarus. No `tb_smma_top_0nm_bpfo_10`, o simulador avisa que não encontrou `corrente_fase_b.hex` e `corrente_fase_c.hex` da classe BPFO. Esses dois arquivos não foram gerados na conversão do dataset. Mesmo assim, o teste classifica as duas janelas como desgaste de rolamento e passa.
+No Icarus Verilog 12, os 38 testbenches terminam com PASS. O mais lento é o `tb_de0cv_4estados`, que simula 320 ms de placa passando pelos quatro estados do motor e leva cerca de 16 minutos para rodar. No `tb_smma_top_0nm_bpfo_10`, o simulador avisa que não encontrou `corrente_fase_b.hex` e `corrente_fase_c.hex` da classe BPFO. Esses dois arquivos não foram gerados na conversão do dataset. Mesmo assim, o teste classifica as duas janelas como desgaste de rolamento e passa.
 
 Para rodar um testbench no Icarus, a partir de `quartus/smma_fft64/`:
 
